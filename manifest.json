@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "AVIM Vietnamese Input",
+  "version": "1.0",
+  "description": "Vietnamese Input Method based on AVIM.",
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["avim.js"],
+      "all_frames": true
+    }
+  ]
+}
