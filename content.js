@@ -1,30 +1,44 @@
-// Disable AVIM's built-in cookie persistence so we can manage it via chrome.storage
+// Disable AVIM's built-in cookie persistence so we can manage it entirely via Chrome Storage
 if (typeof AVIMGlobalConfig !== 'undefined') {
     AVIMGlobalConfig.useCookie = 0; 
 }
 
-// Helper to apply the state to the AVIM object
-function applyState(enabled) {
+const defaultSettings = {
+    enabled: true,
+    method: 0,
+    ckSpell: true,
+    oldAccent: true
+};
+
+// Apply settings to the global AVIM object
+function applySettings(settings) {
     if (typeof AVIMObj === 'undefined') return;
     
-    if (enabled) {
-        AVIMObj.setMethod(0); // 0 = AUTO (Vietnamese ON)
+    // Toggle state & Input Method
+    if (settings.enabled) {
+        AVIMObj.setMethod(settings.method);
     } else {
-        AVIMObj.setMethod(-1); // -1 = OFF (English)
+        AVIMObj.setMethod(-1); // -1 = OFF
     }
+
+    // Check Spell
+    AVIMObj.setSpell(settings.ckSpell ? 1 : 0);
+
+    // Old Accents
+    AVIMObj.setDauCu(settings.oldAccent ? 1 : 0);
 }
 
 // 1. Initialize state on page load
-chrome.storage.local.get(['avimEnabled'], (result) => {
-    // Default to true (Vietnamese) if it hasn't been set yet
-    const enabled = result.avimEnabled !== false; 
-    applyState(enabled);
+chrome.storage.local.get(defaultSettings, (result) => {
+    applySettings(result);
 });
 
-// 2. Listen for changes (e.g., from the popup menu or other tabs)
+// 2. Listen for changes from the popup or other tabs
 chrome.storage.onChanged.addListener((changes, namespace) => {
-    if (namespace === 'local' && changes.avimEnabled) {
-        applyState(changes.avimEnabled.newValue);
+    if (namespace === 'local') {
+        chrome.storage.local.get(defaultSettings, (result) => {
+            applySettings(result);
+        });
     }
 });
 
@@ -33,43 +47,40 @@ let ctrlShiftPressed = false;
 let otherKeyPressed = false;
 
 window.addEventListener('keydown', (e) => {
-    // Check if Ctrl and Shift are held down
     if (e.key === 'Control' || e.key === 'Shift') {
         if (e.ctrlKey && e.shiftKey) {
             ctrlShiftPressed = true;
         }
     } else {
-        // If any other key is pressed (e.g. 'C' for Ctrl+Shift+C), cancel the toggle
         otherKeyPressed = true;
     }
 });
 
 window.addEventListener('keyup', (e) => {
-    // When releasing either Ctrl or Shift
     if (e.key === 'Control' || e.key === 'Shift') {
-        // Only toggle if exactly Ctrl+Shift were pressed together and NO other keys
+        // Trigger toggle if strictly Ctrl+Shift were pressed
         if (ctrlShiftPressed && !otherKeyPressed) {
-            chrome.storage.local.get(['avimEnabled'], (result) => {
-                const currentState = result.avimEnabled !== false;
+            chrome.storage.local.get(['enabled'], (result) => {
+                const currentState = result.enabled !== false;
                 const newState = !currentState;
                 
-                // Save new state (this triggers the onChanged listener automatically)
-                chrome.storage.local.set({ avimEnabled: newState });
+                // Save new state
+                chrome.storage.local.set({ enabled: newState });
                 
-                // Show floating indicator (Unikey style "E" or "V")
+                // Show floating indicator
                 showIndicator(newState);
             });
         }
         ctrlShiftPressed = false;
     }
     
-    // Reset the "other key" blocker when both modifiers are released
+    // Reset blocker when modifiers are released
     if (!e.ctrlKey && !e.shiftKey) {
         otherKeyPressed = false;
     }
 });
 
-// Optional: A tiny visual notification on the screen bottom right ("V" or "E")
+// Visual notification (V or E)
 function showIndicator(isVietnamese) {
     let indicator = document.getElementById('avim-lang-indicator');
     if (!indicator) {
@@ -77,20 +88,27 @@ function showIndicator(isVietnamese) {
         indicator.id = 'avim-lang-indicator';
         Object.assign(indicator.style, {
             position: 'fixed',
-            bottom: '20px',
-            right: '20px',
-            padding: '10px 18px',
-            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            bottom: '24px',
+            right: '24px',
+            width: '40px',
+            height: '40px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: isVietnamese ? '#1976D2' : '#757575',
             color: 'white',
-            fontFamily: 'sans-serif',
-            fontSize: '18px',
+            fontFamily: 'Roboto, sans-serif',
+            fontSize: '20px',
             fontWeight: 'bold',
-            borderRadius: '5px',
-            zIndex: '2147483647', // Max z-index
+            borderRadius: '50%',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
+            zIndex: '2147483647',
             pointerEvents: 'none',
-            transition: 'opacity 0.2s ease-in-out'
+            transition: 'opacity 0.2s ease-in-out, background-color 0.2s'
         });
         document.body.appendChild(indicator);
+    } else {
+        indicator.style.backgroundColor = isVietnamese ? '#1976D2' : '#757575';
     }
     
     indicator.textContent = isVietnamese ? 'V' : 'E';
@@ -99,5 +117,5 @@ function showIndicator(isVietnamese) {
     clearTimeout(indicator.hideTimeout);
     indicator.hideTimeout = setTimeout(() => {
         indicator.style.opacity = '0';
-    }, 800); // Fades out after 0.8 seconds
+    }, 800);
 }
