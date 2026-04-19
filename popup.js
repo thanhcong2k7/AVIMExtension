@@ -1,29 +1,64 @@
-const btnVi = document.getElementById('btn-vi');
-const btnEn = document.getElementById('btn-en');
+const mainToggle = document.getElementById('main-toggle');
+const methodRadios = document.getElementsByName('method');
+const spellToggle = document.getElementById('spell-toggle');
+const accentToggle = document.getElementById('accent-toggle');
+const settingsContent = document.getElementById('settings-content');
 
-function updateUI(enabled) {
-    if (enabled) {
-        btnVi.classList.add('active');
-        btnEn.classList.remove('active');
+// Default configurations
+const defaultSettings = {
+    enabled: true,
+    method: 0,       // 0: Auto
+    ckSpell: true,   // 1: On
+    oldAccent: true  // 1: On (Script's default)
+};
+
+// 1. Load data and set UI
+chrome.storage.local.get(defaultSettings, (settings) => {
+    // Set Main Toggle
+    mainToggle.checked = settings.enabled;
+    updateContentOpacity(settings.enabled);
+
+    // Set Radios
+    for (let radio of methodRadios) {
+        if (parseInt(radio.value) === settings.method) {
+            radio.checked = true;
+            break;
+        }
+    }
+
+    // Set Option Switches
+    spellToggle.checked = settings.ckSpell;
+    accentToggle.checked = settings.oldAccent;
+});
+
+// 2. Listeners to save data instantly
+mainToggle.addEventListener('change', (e) => {
+    const isEnabled = e.target.checked;
+    chrome.storage.local.set({ enabled: isEnabled });
+    updateContentOpacity(isEnabled);
+});
+
+methodRadios.forEach(radio => {
+    radio.addEventListener('change', (e) => {
+        if (e.target.checked) {
+            chrome.storage.local.set({ method: parseInt(e.target.value) });
+        }
+    });
+});
+
+spellToggle.addEventListener('change', (e) => {
+    chrome.storage.local.set({ ckSpell: e.target.checked });
+});
+
+accentToggle.addEventListener('change', (e) => {
+    chrome.storage.local.set({ oldAccent: e.target.checked });
+});
+
+// Helper: Gray out the bottom menu if the extension is turned off
+function updateContentOpacity(isEnabled) {
+    if (isEnabled) {
+        settingsContent.classList.remove('disabled');
     } else {
-        btnEn.classList.add('active');
-        btnVi.classList.remove('active');
+        settingsContent.classList.add('disabled');
     }
 }
-
-// Load current state when opening the popup
-chrome.storage.local.get(['avimEnabled'], (result) => {
-    const enabled = result.avimEnabled !== false;
-    updateUI(enabled);
-});
-
-// Click Listeners
-btnVi.addEventListener('click', () => {
-    chrome.storage.local.set({ avimEnabled: true });
-    updateUI(true);
-});
-
-btnEn.addEventListener('click', () => {
-    chrome.storage.local.set({ avimEnabled: false });
-    updateUI(false);
-});
