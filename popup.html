@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    :root {
+      --primary: #1976D2;
+      --primary-light: #63a4ff;
+      --primary-dark: #004ba0;
+      --bg: #FAFAFA;
+      --surface: #FFFFFF;
+      --text-main: #212121;
+      --text-sec: #757575;
+      --divider: #E0E0E0;
+    }
+
+    body {
+      font-family: 'Roboto', 'Segoe UI', Tahoma, sans-serif;
+      width: 300px;
+      margin: 0;
+      background-color: var(--bg);
+      color: var(--text-main);
+      user-select: none;
+    }
+
+    /* App Bar */
+    .app-bar {
+      background-color: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .app-bar h3 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    /* Content Area */
+    .content {
+      padding: 16px;
+      transition: opacity 0.3s ease;
+    }
+    .content.disabled {
+      opacity: 0.5;
+      pointer-events: none; /* Disables clicking when AVIM is turned off */
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--primary);
+      text-transform: uppercase;
+      margin: 16px 0 12px 0;
+      letter-spacing: 0.5px;
+    }
+    .section-title:first-child { margin-top: 0; }
+
+    /* Material Radios */
+    .radio-group { display: flex; flex-direction: column; gap: 12px; }
+    .radio-label {
+      display: flex; align-items: center; cursor: pointer; font-size: 15px;
+    }
+    .radio-label input {
+      appearance: none; margin: 0 16px 0 0; width: 20px; height: 20px;
+      border: 2px solid var(--text-sec); border-radius: 50%; transition: 0.2s; position: relative;
+    }
+    .radio-label input:checked { border-color: var(--primary); }
+    .radio-label input:checked::after {
+      content: ""; width: 10px; height: 10px; background: var(--primary);
+      border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    }
+
+    /* Material Switches */
+    .switch-row {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-size: 15px;
+    }
+    .switch { position: relative; display: inline-block; width: 36px; height: 14px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #BDBDBD; transition: .3s; border-radius: 14px;
+    }
+    .slider:before {
+      position: absolute; content: ""; height: 20px; width: 20px; left: -2px; bottom: -3px;
+      background-color: var(--surface); transition: .3s; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    }
+    input:checked + .slider { background-color: var(--primary-light); }
+    input:checked + .slider:before { transform: translateX(20px); background-color: var(--primary); }
+    
+    /* Header switch overrides */
+    .app-bar .slider { background-color: rgba(255,255,255,0.3); }
+    .app-bar input:checked + .slider { background-color: rgba(255,255,255,0.5); }
+    .app-bar input:checked + .slider:before { background-color: white; }
+
+    /* Divider & Footer */
+    .divider { height: 1px; background-color: var(--divider); margin: 16px 0; }
+    .footer { text-align: center; font-size: 12px; color: var(--text-sec); margin-top: 8px; }
+
+  </style>
+</head>
+<body>
+
+  <div class="app-bar">
+    <h3>AVIM Input</h3>
+    <label class="switch">
+      <input type="checkbox" id="main-toggle">
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="content" id="settings-content">
+    
+    <div class="section-title">Input Method</div>
+    <div class="radio-group" id="method-group">
+      <label class="radio-label"><input type="radio" name="method" value="0"> Auto (Telex & VNI)</label>
+      <label class="radio-label"><input type="radio" name="method" value="1"> TELEX</label>
+      <label class="radio-label"><input type="radio" name="method" value="2"> VNI</label>
+      <label class="radio-label"><input type="radio" name="method" value="3"> VIQR</label>
+      <label class="radio-label"><input type="radio" name="method" value="4"> VIQR*</label>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section-title">Options</div>
+    
+    <div class="switch-row">
+      <span>Spell Check (Chính tả)</span>
+      <label class="switch">
+        <input type="checkbox" id="spell-toggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="switch-row">
+      <span>Old Accents (hoà, thuỷ)</span>
+      <label class="switch">
+        <input type="checkbox" id="accent-toggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+    
+    <div class="footer">Shortcut to toggle EN/VI: <b>Ctrl + Shift</b></div>
+
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
